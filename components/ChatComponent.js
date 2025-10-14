@@ -42,7 +42,7 @@ const CopyIcon = () => (
       height="13"
       rx="2"
       stroke="#A3A3A3"
-      stroke-width="2"
+      strokeWidth="2"
       className="group-hover:stroke-blue-500"
     />
   </svg>
@@ -52,7 +52,10 @@ const MessageBubble = ({ message, onImagesLoaded }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    !(message.isStreaming === true) && !!message.text
+  );
+
   const [copied, setCopied] = useState(false);
   const [isMarkdownRendered, setIsMarkdownRendered] = useState(false);
 
@@ -91,12 +94,15 @@ const MessageBubble = ({ message, onImagesLoaded }) => {
 
   // 메시지 버블바 로딩바 사용시에는 없애야 함.
   useEffect(() => {
-    if (message.isStreaming) {
+    if (message.isStreaming === true) {
       // Add a small delay before showing the content
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 10);
       return () => clearTimeout(timer);
+    } else if (message.text) {
+      // For non-streaming messages with text, show immediately
+      setIsVisible(true);
     }
   }, [message.isStreaming, message.text]);
 
@@ -395,6 +401,23 @@ export default function ChatComponent({ searchParams }) {
       block: block,
     });
   };
+
+  // Receive token from parent window
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Only accept from your main site’s domain
+      if (!event.origin.includes("localhost:3000")) return;
+
+      if (event.data?.type === "AUTH_TOKEN" && event.data?.token) {
+        const token = event.data.token;
+        // Save to localStorage or memory
+        localStorage.setItem("token", token);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   // Fetch initial suggested questions
   useEffect(() => {
