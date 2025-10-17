@@ -405,8 +405,10 @@ export default function ChatComponent({ searchParams }) {
   // Receive token from parent window
   useEffect(() => {
     const handleMessage = (event) => {
+      console.log(event);
       // Only accept from your main site’s domain
       if (!event.origin.includes("localhost:3000")) return;
+      console.log(event.data);
 
       if (event.data?.type === "AUTH_TOKEN" && event.data?.token) {
         const token = event.data.token;
